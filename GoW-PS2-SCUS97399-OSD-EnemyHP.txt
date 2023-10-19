@@ -1,0 +1,274 @@
+$procname = "pcsx2"
+
+$bigendian = $false
+
+
+[console]::CursorVisible = $false
+$Host.UI.RawUI.BackgroundColor = 'Black'
+$Host.UI.RawUI.ForegroundColor = 'Green'
+
+Function RBytes
+{
+	Param (
+		[IntPtr]$addr,
+		$sizetoread
+	)
+	$addr = [IntPtr]::Add($addr, 0x20000000)
+	[Byte[]] $buff = New-Object Byte[]($sizetoread)
+	$read = $rpm::ReadProcessMemory($proc,$addr,$buff,$buff.length,$null);
+	$buff
+}
+Function RAsciiStr
+{   
+	Param (
+        $addr
+    )
+	([System.Text.Encoding]::ASCII.GetString($(RBytes $addr 0x50))).Split([char]0)[0]
+}
+Function RInt16
+{   
+	Param (
+        $addr
+    )
+	$buff = RBytes $addr 2
+	if ($bigendian -eq $true) {
+		[Array]::Reverse($buff)
+	}
+	[bitconverter]::ToInt16($buff,0)
+}
+Function RInt32
+{   
+	Param (
+        $addr
+    )
+	$buff = RBytes $addr 4
+	if ($bigendian -eq $true) {
+		[Array]::Reverse($buff)
+	}
+	[bitconverter]::ToInt32($buff,0)
+}
+Function RInt64
+{   
+	Param (
+        $addr
+    )
+	$buff = RBytes $addr 8
+	if ($bigendian -eq $true) {
+		[Array]::Reverse($buff)
+	}
+	[bitconverter]::ToInt64($buff,0)
+}
+Function RUInt8
+{   
+	Param (
+        $addr
+    )
+	RBytes $addr 1
+}
+Function RUInt16
+{   
+	Param (
+        $addr
+    )
+	$buff = RBytes $addr 2
+	if ($bigendian -eq $true) {
+		[Array]::Reverse($buff)
+	}
+	[bitconverter]::ToUInt16($buff,0)
+}
+Function RUInt32
+{   
+	Param (
+        $addr
+    )
+	$buff = RBytes $addr 4
+	if ($bigendian -eq $true) {
+		[Array]::Reverse($buff)
+	}
+	[bitconverter]::ToUInt32($buff,0)
+}
+Function RUInt64
+{   
+	Param (
+        $addr
+    )
+	$buff = RBytes $addr 8
+	if ($bigendian -eq $true) {
+		[Array]::Reverse($buff)
+	}
+	[bitconverter]::ToUInt64($buff,0)
+}
+Function RSingle
+{   
+	Param (
+        $addr
+    )
+	$buff = RBytes $addr 4
+	if ($bigendian -eq $true) {
+		[Array]::Reverse($buff)
+	}
+	[bitconverter]::ToSingle($buff,0)
+}
+
+Function WBytes
+{
+	Param (
+		$addr,
+		$wb
+	)
+	$rpm::WriteProcessMemory($proc,$addr,$wb,$wb.length,$null);
+}
+Function WUInt32
+{
+	Param (
+		$addr,
+		$val
+	)
+	$wb = [bitconverter]::GetBytes($val)
+	if ($bigendian) {
+		[Array]::Reverse($wb)
+	}
+	$rpm::WriteProcessMemory($proc,$addr,$wb,$wb.length,$null)|Out-Null
+}
+
+$signature = @"
+[DllImport("kernel32.dll")] public static extern IntPtr OpenProcess(
+    uint h,bool b ,uint p);
+[DllImport("kernel32.dll")] public static extern bool ReadProcessMemory(
+    IntPtr hp,IntPtr Base,[Out]Byte[] buff,int Size,[Out]int bread);
+[DllImport("kernel32.dll")] public static extern bool WriteProcessMemory(
+    IntPtr hp,IntPtr Base,[In]Byte[] buff,int Size,[Out]int bwrite);
+[DllImport("kernel32.dll")] public static extern bool VirtualProtectEx(
+	IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flNewProtect, out uint lpflOldProtect);
+"@
+$PAGE_EXECUTE_READWRITE = 0x40
+$oldProtection = 0
+
+$rpm = Add-Type -MemberDefinition $signature -Name rpm -PassThru
+$access = 0x001F0FFF
+
+$ba = (get-Process $procname).MainModule.BaseAddress
+$procid = (get-Process $procname).ID
+$proc = $rpm::OpenProcess($access, $false, $procid)
+
+
+
+Add-Type -AssemblyName System.Windows.Forms
+
+$ScreenWidth = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width
+$ScreenHeight = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height
+
+
+$form = New-Object System.Windows.Forms.Form
+$form.Text = ""
+$form.Width = 500
+$form.Height = 200
+$form.TopMost = $true
+$form.WindowState = [System.Windows.Forms.FormWindowState]::Maximized
+$form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
+$form.BackColor = [System.Drawing.Color]::Black
+$form.TransparencyKey = [System.Drawing.Color]::Black
+$form.GetType().InvokeMember("SetStyle", [Reflection.BindingFlags]::InvokeMethod -bor [Reflection.BindingFlags]::NonPublic -bor [Reflection.BindingFlags]::Instance, $null, $form, @([System.Windows.Forms.ControlStyles]::DoubleBuffer, $true))
+
+
+$enemyLabel = New-Object System.Windows.Forms.Label
+$enemyLabel.AutoSize = $true
+$enemyLabel.BackColor = [System.Drawing.Color]::Transparent
+$enemyLabel.ForeColor = [System.Drawing.Color]::White
+$enemyLabel.Font = New-Object System.Drawing.Font("Arial", 20, [System.Drawing.FontStyle]::Bold)
+$form.Controls.Add($enemyLabel)
+
+$mouseLabel = New-Object System.Windows.Forms.Label
+$mouseLabel.AutoSize = $true
+$mouseLabel.BackColor = [System.Drawing.Color]::Transparent
+$mouseLabel.ForeColor = [System.Drawing.Color]::White
+$mouseLabel.Font = New-Object System.Drawing.Font("Arial", 20, [System.Drawing.FontStyle]::Bold)
+$form.Controls.Add($mouseLabel)
+
+$hpLabel = New-Object System.Windows.Forms.Label
+$hpLabel.AutoSize = $true
+$hpLabel.BackColor = [System.Drawing.Color]::Transparent
+$hpLabel.ForeColor = [System.Drawing.Color]::White
+$hpLabel.Font = New-Object System.Drawing.Font("Arial", 20, [System.Drawing.FontStyle]::Bold)
+$form.Controls.Add($hpLabel)
+
+
+$timer = New-Object System.Windows.Forms.Timer
+$timer.Interval = 200
+
+$timer.Add_Tick({
+	$CursorPosition = [System.Windows.Forms.Cursor]::Position
+	$NormalizedX = [Math]::Round($CursorPosition.X / $ScreenWidth, 2)
+	$NormalizedY = [Math]::Round($CursorPosition.Y / $ScreenHeight, 2)
+
+	$newEnemyLabel = ""
+	$newHpLabel = ""
+	$currtime = [Math]::Floor([decimal](RSingle 0x302d0c))
+	$newEnemyLabel += "Current Time: " + $currtime + "`n"
+	
+	$enemyptr = RInt32 0x29cd58
+	$enemyptr = RInt32 ($enemyptr)
+	
+	$cont = $true
+	$ptr = 0
+	
+	$ptr = $enemyptr
+	$currhp = RSingle ($ptr + 0x178)
+	$maxhp = RSingle ($ptr + 0x17c)
+	$name = RAsciiStr ((RInt32 ((RInt32 ($ptr + 0x320) + 0x8) + 0x8)))
+	$newHpLabel = $name + "`n"
+	$newHpLabel += "$currhp / $maxhp`n"
+	
+	$i = 1
+	while ($cont) {
+		$ptr = $enemyptr + 0x360 * $i
+		$currhp = RSingle ($ptr + 0x178)
+		$maxhp = RSingle ($ptr + 0x17c)
+		$name = "x"
+		$name = RAsciiStr ((RInt32 ((RInt32 ($ptr + 0x320) + 0x8) + 0x8)))
+		
+		$i++
+		if ($maxhp -eq 0) {
+
+		} else {
+			if (($name.Length -gt 0) -and ($currhp -gt 0)) {
+				$newEnemyLabel += "$name = $currhp / $maxhp`n"
+			}
+		}
+		
+		if ($i -gt 40) {$cont = $false}
+	}
+
+    if($enemyLabel.Text -ne $newEnemyLabel) {
+        $enemyLabel.Text = $newEnemyLabel
+        $enemyLabel.PerformLayout()
+    
+        $formHeight = [int]$form.ClientSize.Height
+        $enemyLabelHeight = [int]$enemyLabel.PreferredHeight
+
+        $newX = 50
+        $newY = ($formHeight - $enemyLabelHeight) / 2
+
+        $enemyLabel.Location = New-Object System.Drawing.Point($newX, $newY)
+    }
+	
+	if ($hpLabel.Text -ne $newHpLabel) {
+		$hpLabel.Text = $newHpLabel
+		$hpLabel.PerformLayout()
+	}
+	
+	$mouseLabel.Text = "$NormalizedX, $NormalizedY"
+	$x = $ScreenWidth * 0.9
+	$y = $ScreenHeight * 0.95
+	$mouseLabel.Location = New-Object System.Drawing.Point($x, $y)
+	
+	$x = $ScreenWidth * 0.17
+	$y = $ScreenHeight * 0.11
+	$hpLabel.Location = New-Object System.Drawing.Point($x, $y)
+})
+
+$timer.Start()
+$form.ShowDialog()
+$form.Add_FormClosed({
+    $timer.Dispose()
+})
