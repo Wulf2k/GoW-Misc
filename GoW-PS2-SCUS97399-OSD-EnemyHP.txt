@@ -1,21 +1,28 @@
 $procname = "pcsx2"
+$largemem = $false
 
 $bigendian = $false
+
+#PCSX2 1.6
+[IntPtr]$global:emuoffset = [IntPtr]::new(0x20000000)
+
 
 
 [console]::CursorVisible = $false
 $Host.UI.RawUI.BackgroundColor = 'Black'
 $Host.UI.RawUI.ForegroundColor = 'Green'
 
+
+
 Function RBytes
 {
 	Param (
-		[IntPtr]$addr,
+		$addr,
 		$sizetoread
 	)
-	$addr = [IntPtr]::Add($addr, 0x20000000)
+	$pos = [IntPtr]::Add($global:emuoffset, $addr)
 	[Byte[]] $buff = New-Object Byte[]($sizetoread)
-	$read = $rpm::ReadProcessMemory($proc,$addr,$buff,$buff.length,$null);
+	$read = $rpm::ReadProcessMemory($proc,$pos,$buff,$buff.length,$null);
 	$buff
 }
 Function RAsciiStr
@@ -25,111 +32,41 @@ Function RAsciiStr
     )
 	([System.Text.Encoding]::ASCII.GetString($(RBytes $addr 0x50))).Split([char]0)[0]
 }
-Function RInt16
-{   
-	Param (
-        $addr
+Function ReadAndConvert {
+    Param (
+        [IntPtr]$addr,
+        [int]$byteCount,
+        [string]$convertType
     )
-	$buff = RBytes $addr 2
-	if ($bigendian -eq $true) {
-		[Array]::Reverse($buff)
-	}
-	[bitconverter]::ToInt16($buff,0)
-}
-Function RInt32
-{   
-	Param (
-        $addr
-    )
-	$buff = RBytes $addr 4
-	if ($bigendian -eq $true) {
-		[Array]::Reverse($buff)
-	}
-	[bitconverter]::ToInt32($buff,0)
-}
-Function RInt64
-{   
-	Param (
-        $addr
-    )
-	$buff = RBytes $addr 8
-	if ($bigendian -eq $true) {
-		[Array]::Reverse($buff)
-	}
-	[bitconverter]::ToInt64($buff,0)
-}
-Function RUInt8
-{   
-	Param (
-        $addr
-    )
-	RBytes $addr 1
-}
-Function RUInt16
-{   
-	Param (
-        $addr
-    )
-	$buff = RBytes $addr 2
-	if ($bigendian -eq $true) {
-		[Array]::Reverse($buff)
-	}
-	[bitconverter]::ToUInt16($buff,0)
-}
-Function RUInt32
-{   
-	Param (
-        $addr
-    )
-	$buff = RBytes $addr 4
-	if ($bigendian -eq $true) {
-		[Array]::Reverse($buff)
-	}
-	[bitconverter]::ToUInt32($buff,0)
-}
-Function RUInt64
-{   
-	Param (
-        $addr
-    )
-	$buff = RBytes $addr 8
-	if ($bigendian -eq $true) {
-		[Array]::Reverse($buff)
-	}
-	[bitconverter]::ToUInt64($buff,0)
-}
-Function RSingle
-{   
-	Param (
-        $addr
-    )
-	$buff = RBytes $addr 4
-	if ($bigendian -eq $true) {
-		[Array]::Reverse($buff)
-	}
-	[bitconverter]::ToSingle($buff,0)
-}
+    $buff = RBytes $addr $byteCount
+    if ($bigendian -eq $true) {
+        [Array]::Reverse($buff)
+    }
 
-Function WBytes
-{
-	Param (
-		$addr,
-		$wb
-	)
-	$rpm::WriteProcessMemory($proc,$addr,$wb,$wb.length,$null);
+    switch ($convertType) {
+        "Int16"   { return [BitConverter]::ToInt16($buff, 0) }
+        "Int32"   { return [BitConverter]::ToInt32($buff, 0) }
+        "Int64"   { return [BitConverter]::ToInt64($buff, 0) }
+        "UInt8"   { return $buff[0] }
+        "UInt16"  { return [BitConverter]::ToUInt16($buff, 0) }
+        "UInt32"  { return [BitConverter]::ToUInt32($buff, 0) }
+        "UInt64"  { return [BitConverter]::ToUInt64($buff, 0) }
+        "Single"  { return [BitConverter]::ToSingle($buff, 0) }
+        default   { throw "Unknown conversion type $convertType" }
+    }
 }
-Function WUInt32
-{
-	Param (
-		$addr,
-		$val
-	)
-	$wb = [bitconverter]::GetBytes($val)
-	if ($bigendian) {
-		[Array]::Reverse($wb)
-	}
-	$rpm::WriteProcessMemory($proc,$addr,$wb,$wb.length,$null)|Out-Null
-}
+Function RInt16   { Param ($addr) ReadAndConvert $addr 2 "Int16" }
+Function RInt32   { Param ($addr) ReadAndConvert $addr 4 "Int32" }
+Function RInt64   { Param ($addr) ReadAndConvert $addr 8 "Int64" }
+Function RUInt8   { Param ($addr) ReadAndConvert $addr 1 "UInt8" }
+Function RUInt16  { Param ($addr) ReadAndConvert $addr 2 "UInt16" }
+Function RUInt32  { Param ($addr) ReadAndConvert $addr 4 "UInt32" }
+Function RUInt64  { Param ($addr) ReadAndConvert $addr 8 "UInt64" }
+Function RSingle  { Param ($addr) ReadAndConvert $addr 4 "Single" }
+
+
+
+
 
 $signature = @"
 [DllImport("kernel32.dll")] public static extern IntPtr OpenProcess(
@@ -152,6 +89,11 @@ $procid = (get-Process $procname).ID
 $proc = $rpm::OpenProcess($access, $false, $procid)
 
 
+#if ($largemem) {
+#	[IntPtr]$global:emuoffset = [IntPtr]::Zero
+#	[IntPtr]$global:emuoffset = RUInt64 ([IntPtr]::Add($ba, 0x3095bb0))
+#}
+
 
 Add-Type -AssemblyName System.Windows.Forms
 
@@ -171,26 +113,29 @@ $form.TransparencyKey = [System.Drawing.Color]::Black
 $form.GetType().InvokeMember("SetStyle", [Reflection.BindingFlags]::InvokeMethod -bor [Reflection.BindingFlags]::NonPublic -bor [Reflection.BindingFlags]::Instance, $null, $form, @([System.Windows.Forms.ControlStyles]::DoubleBuffer, $true))
 
 
-$enemyLabel = New-Object System.Windows.Forms.Label
-$enemyLabel.AutoSize = $true
-$enemyLabel.BackColor = [System.Drawing.Color]::Transparent
-$enemyLabel.ForeColor = [System.Drawing.Color]::White
-$enemyLabel.Font = New-Object System.Drawing.Font("Arial", 20, [System.Drawing.FontStyle]::Bold)
-$form.Controls.Add($enemyLabel)
+Function CreateLabel ($font, $fontSize, $color) {
+    $label = New-Object System.Windows.Forms.Label
+    $label.AutoSize = $true
+    $label.BackColor = [System.Drawing.Color]::Transparent
+    $label.ForeColor = $color
+    $label.Font = New-Object System.Drawing.Font($font, $fontSize, [System.Drawing.FontStyle]::Bold)
+    $form.Controls.Add($label)
+    return $label
+}
 
-$mouseLabel = New-Object System.Windows.Forms.Label
-$mouseLabel.AutoSize = $true
-$mouseLabel.BackColor = [System.Drawing.Color]::Transparent
-$mouseLabel.ForeColor = [System.Drawing.Color]::White
-$mouseLabel.Font = New-Object System.Drawing.Font("Arial", 20, [System.Drawing.FontStyle]::Bold)
-$form.Controls.Add($mouseLabel)
 
-$hpLabel = New-Object System.Windows.Forms.Label
-$hpLabel.AutoSize = $true
-$hpLabel.BackColor = [System.Drawing.Color]::Transparent
-$hpLabel.ForeColor = [System.Drawing.Color]::White
-$hpLabel.Font = New-Object System.Drawing.Font("Arial", 20, [System.Drawing.FontStyle]::Bold)
-$form.Controls.Add($hpLabel)
+
+
+$enemyLabel = CreateLabel "Arial" 16 "White"
+$mouseLabel = CreateLabel "Arial" 16 "White"
+$nameLabel = CreateLabel "Arial" 16 "White"
+
+$hpLabel = CreateLabel "Arial" 16 "White"
+$mpLabel = CreateLabel "Arial" 16 "White"
+$redorbLabel = CreateLabel "Arial" 16 "White"
+$rageLabel = CreateLabel "Arial" 16 "White"
+
+$posLabel = CreateLabel "Arial" 16 "White"
 
 
 $timer = New-Object System.Windows.Forms.Timer
@@ -198,13 +143,17 @@ $timer.Interval = 200
 
 $timer.Add_Tick({
 	$CursorPosition = [System.Windows.Forms.Cursor]::Position
-	$NormalizedX = [Math]::Round($CursorPosition.X / $ScreenWidth, 2)
-	$NormalizedY = [Math]::Round($CursorPosition.Y / $ScreenHeight, 2)
+	$NormalizedX = [Math]::Round($CursorPosition.X / $ScreenWidth, 3)
+	$NormalizedY = [Math]::Round($CursorPosition.Y / $ScreenHeight, 3)
+
+	
 
 	$newEnemyLabel = ""
 	$newHpLabel = ""
 	$currtime = [Math]::Floor([decimal](RSingle 0x302d0c))
+	$deaths = RInt32 0x302d08
 	$newEnemyLabel += "Current Time: " + $currtime + "`n"
+	$newEnemyLabel += "Deaths: " + $deaths + "`n"
 	
 	$enemyptr = RInt32 0x29cd58
 	$enemyptr = RInt32 ($enemyptr)
@@ -215,9 +164,32 @@ $timer.Add_Tick({
 	$ptr = $enemyptr
 	$currhp = RSingle ($ptr + 0x178)
 	$maxhp = RSingle ($ptr + 0x17c)
+	$currmp = RSingle (0x302d1c)
+	$currRage = RSingle (0x302d20)
+	$redorbs = RInt16 (0x302d28)
+	
 	$name = RAsciiStr ((RInt32 ((RInt32 ($ptr + 0x320) + 0x8) + 0x8)))
-	$newHpLabel = $name + "`n"
-	$newHpLabel += "$currhp / $maxhp`n"
+	$newNameLabel = $name
+	$newHpLabel = "$currhp / $maxhp hp"
+	$newMpLabel = "$currmp mp`n$redorbs orbs"
+	
+	$newRageLabel = "$currRage rage"
+	
+	
+	$Wad1 = RAsciiStr (RInt32 0x335280)
+	$Wad2 = RAsciiStr (RInt32 0x335284)
+	
+	$kptr = RInt32 0x29cd58
+	$kptr = RInt32 $kptr
+	
+	$xpos = RSingle ($kptr + 0x80)
+	$ypos = RSingle ($kptr + 0x84)
+	$zpos = RSingle ($kptr + 0x88)
+	
+	$newposLabel = "$Wad1`n$Wad2`n"
+	$newposLabel += "x: $xpos`n"
+	$newposLabel += "y: $ypos`n"
+	$newposLabel += "z: $zpos`n"
 	
 	$i = 1
 	while ($cont) {
@@ -252,19 +224,65 @@ $timer.Add_Tick({
         $enemyLabel.Location = New-Object System.Drawing.Point($newX, $newY)
     }
 	
+	if ($nameLabel.Text -ne $newNameLabel) {
+		$nameLabel.Text = $newNameLabel
+		$hpLabel.PerformLayout()
+	}
+	
 	if ($hpLabel.Text -ne $newHpLabel) {
 		$hpLabel.Text = $newHpLabel
 		$hpLabel.PerformLayout()
 	}
 	
+	if ($mpLabel.Text -ne $newMpLabel) {
+		$mpLabel.Text = $newMpLabel
+		$mpLabel.PerformLayout()
+	}
+	
+	if ($redorbLabel.Text -ne $newRedorbLabel) {
+		$redorbLabel.Text = $newRedorbLabel
+		$redorbLabel.PerformLayout()
+	}
+	
+	if ($rageLabel.Text -ne $newRageLabel) {
+		$rageLabel.Text = $newRageLabel
+		$rageLabel.PerformLayout()
+	}
+	
+	if ($posLabel.Text -ne $newposLabel) {
+		$posLabel.Text = $newposLabel
+		$posLabel.PerformLayout()
+	}
+	
 	$mouseLabel.Text = "$NormalizedX, $NormalizedY"
-	$x = $ScreenWidth * 0.9
+	#make positive to display mouse position, for label positioning
+	$x = $ScreenWidth * -0.9
 	$y = $ScreenHeight * 0.95
 	$mouseLabel.Location = New-Object System.Drawing.Point($x, $y)
 	
-	$x = $ScreenWidth * 0.17
-	$y = $ScreenHeight * 0.11
+	$x = $ScreenWidth * 0.168
+	$y = $ScreenHeight * 0.060
+	$nameLabel.Location = New-Object System.Drawing.Point($x, $y)
+	
+	$x = $ScreenWidth * 0.168
+	$y = $ScreenHeight * 0.085
 	$hpLabel.Location = New-Object System.Drawing.Point($x, $y)
+	
+	$x = $ScreenWidth * 0.168
+	$y = $ScreenHeight * 0.110
+	$mpLabel.Location = New-Object System.Drawing.Point($x, $y)
+	
+	$x = $ScreenWidth * 0.168
+	$y = $ScreenHeight * 0.120
+	#$redorbLabel.Location = New-Object System.Drawing.Point($x, $y)
+	
+	$x = $ScreenWidth * 0.168
+	$y = $ScreenHeight * 0.150
+	$rageLabel.Location = New-Object System.Drawing.Point($x, $y)
+	
+	$x = $ScreenWidth * 0.03
+	$y = $ScreenHeight * 0.26
+	$posLabel.Location = New-Object System.Drawing.Point($x, $y)
 })
 
 $timer.Start()
