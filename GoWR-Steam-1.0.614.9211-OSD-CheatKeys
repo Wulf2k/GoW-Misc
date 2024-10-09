@@ -1,0 +1,392 @@
+$procname = "gowr"
+$largemem = $false
+
+$bigendian = $false
+
+
+
+
+[console]::CursorVisible = $false
+$Host.UI.RawUI.BackgroundColor = 'Black'
+$Host.UI.RawUI.ForegroundColor = 'Green'
+
+
+
+Function RBytes
+{
+	Param (
+		[IntPtr]$addr,
+		$sizetoread
+	)
+	$pos = $addr
+	[Byte[]] $buff = New-Object Byte[]($sizetoread)
+	$read = $rpm::ReadProcessMemory($proc,$pos,$buff,$buff.length,$null);
+	$buff
+}
+Function RAsciiStr
+{   
+	Param (
+        $addr
+    )
+	([System.Text.Encoding]::ASCII.GetString($(RBytes $addr 0x50))).Split([char]0)[0]
+}
+Function ReadAndConvert {
+    Param (
+        [IntPtr]$addr,
+        [int]$byteCount,
+        [string]$convertType
+    )
+    $buff = RBytes $addr $byteCount
+    if ($bigendian -eq $true) {
+        [Array]::Reverse($buff)
+    }
+
+    switch ($convertType) {
+        "Int16"   { return [BitConverter]::ToInt16($buff, 0) }
+        "Int32"   { return [BitConverter]::ToInt32($buff, 0) }
+        "Int64"   { return [BitConverter]::ToInt64($buff, 0) }
+        "UInt8"   { return $buff[0] }
+        "UInt16"  { return [BitConverter]::ToUInt16($buff, 0) }
+        "UInt32"  { return [BitConverter]::ToUInt32($buff, 0) }
+        "UInt64"  { return [BitConverter]::ToUInt64($buff, 0) }
+        "Single"  { return [BitConverter]::ToSingle($buff, 0) }
+        default   { throw "Unknown conversion type $convertType" }
+    }
+}
+Function RInt16   { Param ($addr) ReadAndConvert $addr 2 "Int16" }
+Function RInt32   { Param ($addr) ReadAndConvert $addr 4 "Int32" }
+Function RInt64   { Param ($addr) ReadAndConvert $addr 8 "Int64" }
+Function RUInt8   { Param ($addr) ReadAndConvert $addr 1 "UInt8" }
+Function RUInt16  { Param ($addr) ReadAndConvert $addr 2 "UInt16" }
+Function RUInt32  { Param ($addr) ReadAndConvert $addr 4 "UInt32" }
+Function RUInt64  { Param ($addr) ReadAndConvert $addr 8 "UInt64" }
+Function RSingle  { Param ($addr) ReadAndConvert $addr 4 "Single" }
+
+Function WBytes {
+    Param (
+        [IntPtr]$addr,
+        [Byte[]]$dataToWrite
+    )
+    $pos = $addr
+    $writelen = $rpm::WriteProcessMemory($proc, $pos, $dataToWrite, $dataToWrite.length, $null);
+    return $writelen
+}
+
+Function WAsciiStr {
+    Param (
+        [IntPtr]$addr,
+        [string]$str
+    )
+    $bytes = [System.Text.Encoding]::ASCII.GetBytes($str + [char]0) # Add null terminator
+    WBytes $addr $bytes
+}
+
+Function WriteAndConvert {
+    Param (
+        [IntPtr]$addr,
+        [int]$byteCount,
+        [string]$convertType,
+        $value
+    )
+    $buff = New-Object Byte[]($byteCount)
+    
+    switch ($convertType) {
+        "Int16"   { $buff = [BitConverter]::GetBytes([Int16]$value) }
+        "Int32"   { $buff = [BitConverter]::GetBytes([Int32]$value) }
+        "Int64"   { $buff = [BitConverter]::GetBytes([Int64]$value) }
+        "UInt8"   { $buff = [Byte[]]@($value) }
+        "UInt16"  { $buff = [BitConverter]::GetBytes([UInt16]$value) }
+        "UInt32"  { $buff = [BitConverter]::GetBytes([UInt32]$value) }
+        "UInt64"  { $buff = [BitConverter]::GetBytes([UInt64]$value) }
+        "Single"  { $buff = [BitConverter]::GetBytes([Single]$value) }
+        default   { throw "Unknown conversion type $convertType" }
+    }
+
+    if ($bigendian -eq $true) {
+        [Array]::Reverse($buff)
+    }
+
+    WBytes $addr $buff
+}
+
+Function WInt16 { Param ($addr, $value) WriteAndConvert $addr 2 "Int16" $value }
+Function WInt32 { Param ($addr, $value) WriteAndConvert $addr 4 "Int32" $value }
+Function WInt64 { Param ($addr, $value) WriteAndConvert $addr 8 "Int64" $value }
+Function WUInt8 { Param ($addr, $value) WriteAndConvert $addr 1 "UInt8" $value }
+Function WUInt16 { Param ($addr, $value) WriteAndConvert $addr 2 "UInt16" $value }
+Function WUInt32 { Param ($addr, $value) WriteAndConvert $addr 4 "UInt32" $value }
+Function WUInt64 { Param ($addr, $value) WriteAndConvert $addr 8 "UInt64" $value }
+Function WSingle { Param ($addr, $value) WriteAndConvert $addr 4 "Single" $value }
+
+
+
+
+
+$signature = @"
+[DllImport("kernel32.dll")] public static extern IntPtr OpenProcess(
+    uint h,bool b ,uint p);
+[DllImport("kernel32.dll")] public static extern bool ReadProcessMemory(
+    IntPtr hp,IntPtr Base,[Out]Byte[] buff,int Size,[Out]int bread);
+[DllImport("kernel32.dll")] public static extern bool WriteProcessMemory(
+    IntPtr hp,IntPtr Base,[In]Byte[] buff,int Size,[Out]int bwrite);
+[DllImport("kernel32.dll")] public static extern bool VirtualProtectEx(
+	IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flNewProtect, out uint lpflOldProtect);
+"@
+$PAGE_EXECUTE_READWRITE = 0x40
+$oldProtection = 0
+
+$rpm = Add-Type -MemberDefinition $signature -Name rpm -PassThru
+$access = 0x001F0FFF
+
+[Int64]$ba = (get-Process $procname).MainModule.BaseAddress
+$procid = (get-Process $procname).ID
+$proc = $rpm::OpenProcess($access, $false, $procid)
+
+
+#if ($largemem) {
+#	[IntPtr]$global:emuoffset = [IntPtr]::Zero
+#	[IntPtr]$global:emuoffset = RUInt64 ([IntPtr]::Add($ba, 0x3095bb0))
+#}
+
+
+Add-Type -AssemblyName System.Windows.Forms
+
+$ScreenWidth = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width
+$ScreenHeight = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height
+
+
+$form = New-Object System.Windows.Forms.Form
+$form.Text = ""
+$form.Width = 500
+$form.Height = 200
+$form.TopMost = $true
+$form.WindowState = [System.Windows.Forms.FormWindowState]::Maximized
+$form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
+$form.BackColor = [System.Drawing.Color]::Black
+$form.TransparencyKey = [System.Drawing.Color]::Black
+$form.GetType().InvokeMember("SetStyle", [Reflection.BindingFlags]::InvokeMethod -bor [Reflection.BindingFlags]::NonPublic -bor [Reflection.BindingFlags]::Instance, $null, $form, @([System.Windows.Forms.ControlStyles]::DoubleBuffer, $true))
+
+
+Function CreateLabel ($font, $fontSize, $color) {
+    $label = New-Object System.Windows.Forms.Label
+    $label.AutoSize = $true
+    $label.BackColor = [System.Drawing.Color]::Transparent
+    $label.ForeColor = $color
+    $label.Font = New-Object System.Drawing.Font($font, $fontSize, [System.Drawing.FontStyle]::Bold)
+    $form.Controls.Add($label)
+    return $label
+}
+
+
+
+
+$enemyLabel = CreateLabel "Arial" 16 "White"
+$mouseLabel = CreateLabel "Arial" 16 "White"
+$nameLabel = CreateLabel "Arial" 16 "White"
+
+$hpLabel = CreateLabel "Arial" 16 "White"
+$rageLabel = CreateLabel "Arial" 16 "White"
+
+$posLabel = CreateLabel "Arial" 16 "White"
+
+
+$timer = New-Object System.Windows.Forms.Timer
+$timer.Interval = 33
+$global:cheatpress = $false
+$global:speeduppress = $false
+$global:speeddownpress = $false
+
+$timer.Add_Tick({
+	$CursorPosition = [System.Windows.Forms.Cursor]::Position
+	$NormalizedX = [Math]::Round($CursorPosition.X / $ScreenWidth, 3)
+	$NormalizedY = [Math]::Round($CursorPosition.Y / $ScreenHeight, 3)
+
+	
+
+	$newEnemyLabel = ""
+	$newHpLabel = ""
+
+	if ($global:cheatpress -eq $false) {
+		$newEnemyLabel += "LB + →: Enable`n`n"
+	}
+	
+	
+	if ($global:cheatpress) {
+		$newEnemyLabel += "LB + ← : Disable`n`n"
+		$newEnemyLabel += "LB + ↑ / ↓: Fly up/down`n"
+		$newEnemyLabel += "LB + A: Speed Up`n"
+		$newEnemyLabel += "LB + X: Speed Down`n"
+		$newEnemyLabel += "LB + Y: Max HP / Rage`n`n"
+		$newEnemyLabel += "LT: Jump`n"
+	}
+
+	$cont = $true
+	
+	
+	$ptr = 0	
+	$kptr = RInt64 ($ba + 0x5b07608)
+
+	
+	
+
+	$currhp = RSingle ($kptr + 0x2b90)
+	$currRage = RSingle ($kptr + 0x2c28)
+
+	
+	$name = RAsciiStr ($kptr + 0x7078)
+	$newNameLabel = $name
+	$newHpLabel = "$currhp hp"
+
+	$newRageLabel = "$currRage rage"
+
+	
+	$xpos = [Math]::Floor([decimal]((RSingle ($kptr + 0x50)) * 100)) / 100
+	$ypos = [Math]::Floor([decimal]((RSingle ($kptr + 0x54)) * 100)) / 100
+	$zpos = [Math]::Floor([decimal]((RSingle ($kptr + 0x58)) * 100)) / 100
+
+	$newposLabel += "x: $xpos`n"
+	$newposLabel += "y: $ypos`n"
+	$newposLabel += "z: $zpos`n"
+	
+	$i = 1
+
+    if($enemyLabel.Text -ne $newEnemyLabel) {
+        $enemyLabel.Text = $newEnemyLabel
+        $enemyLabel.PerformLayout()
+    
+        $formHeight = [int]$form.ClientSize.Height
+        $enemyLabelHeight = [int]$enemyLabel.PreferredHeight
+
+        $newX = $ScreenWidth * 0.03
+        $newY = $ScreenHeight * 0.48
+
+        $enemyLabel.Location = New-Object System.Drawing.Point($newX, $newY)
+    }
+	
+	if ($nameLabel.Text -ne $newNameLabel) {
+		$nameLabel.Text = $newNameLabel
+		$hpLabel.PerformLayout()
+	}
+	
+	if ($hpLabel.Text -ne $newHpLabel) {
+		$hpLabel.Text = $newHpLabel
+		$hpLabel.PerformLayout()
+	}
+
+	if ($rageLabel.Text -ne $newRageLabel) {
+		$rageLabel.Text = $newRageLabel
+		$rageLabel.PerformLayout()
+	}
+	
+	if ($posLabel.Text -ne $newposLabel) {
+		$posLabel.Text = $newposLabel
+		$posLabel.PerformLayout()
+	}
+	
+	$mouseLabel.Text = "$NormalizedX, $NormalizedY"
+	#make positive to display mouse position, for label positioning
+	$x = $ScreenWidth * -0.9
+	$y = $ScreenHeight * 0.95
+	$mouseLabel.Location = New-Object System.Drawing.Point($x, $y)
+	
+	$x = $ScreenWidth * 0.03
+	$y = $ScreenHeight * 0.2
+	$nameLabel.Location = New-Object System.Drawing.Point($x, $y)
+	
+	$x = $ScreenWidth * 0.03
+	$y = $ScreenHeight * 0.22
+	$hpLabel.Location = New-Object System.Drawing.Point($x, $y)
+
+	$x = $ScreenWidth * 0.03
+	$y = $ScreenHeight * 0.24
+	$rageLabel.Location = New-Object System.Drawing.Point($x, $y)
+	
+	$x = $ScreenWidth * 0.03
+	$y = $ScreenHeight * 0.3
+	$posLabel.Location = New-Object System.Drawing.Point($x, $y)
+	
+	
+	$pad = ($ba + 0x3a3b5f0)
+	$cptr = RInt64 ($ba + 0x24f1ec0)
+	
+	if ((RUInt16 ($pad + 0x10)) -eq 0x2004) {
+		$global:cheatpress = $true
+	}
+	if ((RUInt16 ($pad + 0x10)) -eq 0x8004) {
+		WSingle ($kptr + 0x2b10) 1
+		WUInt32 ($kptr + 0x2b50) 4
+		WUInt8 ($cptr + 0x8a1) 0
+		WSingle ($cptr + 0x8a4) 0
+		$global:cheatpress = $false
+	}
+	
+	if ($global:cheatpress) {
+		if ((RUInt16 ($pad + 0x10)) -eq 0x1) {
+			WUInt32 ($kptr + 0x2b50) 0
+			WUInt8 ($cptr + 0x8a1) 1
+			WSingle ($cptr + 0x8a4) -20
+		}
+		if ((RUInt16 ($pad + 0x10)) -eq 0x14) {
+			WSingle ($kptr + 0x2b90) 1000
+			WSingle ($kptr + 0x2c28) 1000
+		}
+		if ((RUInt16 ($pad + 0x10)) -eq 0x44) {
+			if ($global:speeduppress -eq $false) {
+				$global:speeduppress = $true
+				$speed = RSingle ($kptr + 0x2b10)
+				WSingle ($kptr + 0x2b10) ($speed + 1)
+			}
+		} else {
+			$global:speeduppress = $false
+		}
+		if ((RUInt16 ($pad + 0x10)) -eq 0x84) {
+			if ($global:speeddownpress -eq $false) {
+				$global:speeddownpress = $true
+				$speed = RSingle ($kptr + 0x2b10)
+				WSingle ($kptr + 0x2b10) ($speed - 1)
+			}
+		} else {
+			$global:speeddownpress = $false
+		}
+		if ((RUInt16 ($pad + 0x10)) -eq 0x1004) {
+			WSingle ($kptr + 0x2b10) 5
+			WUInt32 ($kptr + 0x2b50) 0
+			WSingle ($kptr + 0x6720) $xpos
+			WSingle ($kptr + 0x6724) ($ypos + 1)
+			WSingle ($kptr + 0x6728) $zpos
+			WUInt8 ($kptr + 0x6774) 1
+			
+			WUInt8 ($cptr + 0x8a1) 1
+			WSingle ($cptr + 0x8a4) 0
+		}
+		
+		if ((RUInt16 ($pad + 0x10)) -eq 0x4004) {
+			WSingle ($kptr + 0x2b10) 5
+			WUInt32 ($kptr + 0x2b50) 0
+			WSingle ($kptr + 0x6720) $xpos
+			WSingle ($kptr + 0x6724) ($ypos - 1)
+			WSingle ($kptr + 0x6728) $zpos
+			WUInt8 ($kptr + 0x6774) 1
+			
+			WUInt8 ($cptr + 0x8a1) 1
+			WSingle ($cptr + 0x8a4) 0
+		}
+		
+		if ((RUInt16 ($pad + 0x10)) -eq 0x0) {
+			if ((RSingle ($cptr + 0x8a4)) -lt 0) {
+				WUInt32 ($kptr + 0x2b50) 4
+				WUInt8 ($cptr + 0x8a1) 0
+				WSingle ($cptr + 0x8a4) 0
+			}
+		}
+	}
+	
+	
+	
+})
+
+$timer.Start()
+$form.ShowDialog()
+$form.Add_FormClosed({
+    $timer.Dispose()
+})
