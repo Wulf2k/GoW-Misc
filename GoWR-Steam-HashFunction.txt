@@ -1,0 +1,123 @@
+$str = "DebugToggle"
+
+
+
+
+Add-Type -AssemblyName "System.Numerics"
+$mod = [System.Numerics.BigInteger]::Parse("10000000000000000", "AllowHexSpecifier")
+
+function HashString {
+    param (
+        [string]$inputString
+    )
+	
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($inputString)
+    $uVar4 = [System.Numerics.BigInteger]::Zero
+
+    for ($i = 0; $i -lt $inputString.Length; $i++) {
+		$byte = $bytes[$i]
+        if ($byte -eq 0) {
+            break
+        } else {
+			$uVar3 = $byte + 0x100
+			$uVar3 = ($uVar3 - 0x61) % 0x100
+			
+			if ($uVar3 -gt 0x19) {
+				$uVar3 = $bytes[$i]
+			} else {
+				$uVar3 = $bytes[$i] - 0x20
+			}
+			
+			$uVar4 = (($uVar3 + $uVar4) * 0x401) % $mod
+			$uVar4shr = ($uVar4 -shr 6) % $mod
+			$uVar4 = $uVar4 -bxor $uVar4shr % $mod
+			
+			
+			#$uVar4.ToString("X")
+		}
+    }
+	$uVar4 = $uVar4 % $mod
+	return $uVar4
+}
+
+
+
+$hashedValue = HashString $str
+$hexString = $hashedValue.ToString("X")
+if ($hexString.Length -gt 16) {
+	$hexString = $hexString.Substring($hexString.Length - 16)
+} else {
+	$hexString.PadLeft(16, '0')
+}	
+$hexString
+
+
+$hexString = $hexString -replace '(.{2})(?!$)', '$1 '
+$bytePairs = $hexString -split ' '
+$reversedHex = $bytePairs[($bytePairs.Length-1)..0] -join ' '
+$reversedHex
+
+
+$strList = {
+'ArmorUpgradeAsgard',
+'ArmorUpgradeCrystal',
+'AtreusXP',							#	5C E2 67 B4 F9 28 D0 A1
+'Bifrost',
+'BifrostGreyDmg',
+'BondedLeather',
+'Burn',
+'CD_BerserkerComboBreaker',
+'CD_BerserkerFury',
+'CraftingUpgradeCommon',			#	B3 CA AF 07 86 CD 12 80
+'CraftingUpgradeEpic',
+'CraftingUpgradeRare',				#	8F E2 D3 A5 AD 8D 21 2D
+'DecapChance',
+'DragonLoot',
+'DraugrEmpressLoot',
+'EconomyXP',						#	8A 9A 9B 83 1C F6 7C 9C
+'FreyaXP',							#	
+'Frost',
+'Hacksilver',						#	9E 52 40 D2 74 06 E8 5A
+'Health',
+'HelEssence',
+'HexArrow',
+'HiltUpgradeAsgard',
+'HiltUpgradeCommon',
+'HiltUpgradeCrystal',
+'HiltUpgradeEpic',
+'HiltUpgradeRare',
+'HuntersMark',
+'LargeMonsterPart',
+'LindwormScale',
+'MiningRigLoot',
+'Momentum',
+'MomentumBaseSharedMeter',
+'MuspArmorResource',
+'MuspCurrency',						#	3B EE 50 B4 EC B3 62 1E
+'MuspHiltResource',
+'MuspShieldResource',
+'OffBalance',
+'Poison',
+'PristineDragonLoot',
+'PurifiedCrystal',
+'RageDrain',
+'RealmDust',
+'RecentRunicCounter',
+'RunicArmor',
+'ShatteredRunes',
+'ShieldUpgradeAsgard',
+'ShieldUpgradeCommon',
+'ShieldUpgradeCrystal',
+'ShieldUpgradeEpic',
+'ShieldUpgradeRare',
+'ShockArrow',
+'SmallMonsterPart',
+'SonicArrow',
+'SqueakySphereOrb',
+'StoneTrollLoot',
+'StunState',
+'Weaken',
+'WhiplashMeter',
+'WhisperingSlab',
+'Wound'
+}

@@ -248,6 +248,11 @@ $timer.Add_Tick({
 	$newposLabel += "y: $ypos`n"
 	$newposLabel += "z: $zpos`n"
 	
+	$wadptr = RInt64 ($kptr + 0x79f8)
+	$wadname = RAsciiStr ($wadptr + 0xcb8)
+	
+	$newposLabel += "$wadname`n"
+	
 	$i = 1
 
     if($enemyLabel.Text -ne $newEnemyLabel) {
