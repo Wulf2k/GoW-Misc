@@ -1,4 +1,4 @@
-$str = "DebugToggle"
+$str = "behavior_tree.Runtime.eInfluenceDecay"
 
 
 

@@ -314,10 +314,10 @@ $timer.Add_Tick({
 	$pad = ($ba + 0x3a3b5f0)
 	$cptr = RInt64 ($ba + 0x24f1ec0)
 	
-	if ((RUInt16 ($pad + 0x10)) -eq 0x2004) {
+	if ((RUInt16 ($pad + 0x10)) -eq 0x2004) {			#lb + >
 		$global:cheatpress = $true
 	}
-	if ((RUInt16 ($pad + 0x10)) -eq 0x8004) {
+	if ((RUInt16 ($pad + 0x10)) -eq 0x8004) {			#lb + <
 		WSingle ($kptr + 0x2b10) 1
 		WUInt32 ($kptr + 0x2b50) 4
 		WUInt8 ($cptr + 0x8a1) 0
@@ -326,16 +326,16 @@ $timer.Add_Tick({
 	}
 	
 	if ($global:cheatpress) {
-		if ((RUInt16 ($pad + 0x10)) -eq 0x1) {
+		if ((RUInt16 ($pad + 0x10)) -eq 0x1) {			#lt
 			WUInt32 ($kptr + 0x2b50) 0
 			WUInt8 ($cptr + 0x8a1) 1
 			WSingle ($cptr + 0x8a4) -20
 		}
-		if ((RUInt16 ($pad + 0x10)) -eq 0x14) {
+		if ((RUInt16 ($pad + 0x10)) -eq 0x14) {			#lb + Y
 			WSingle ($kptr + 0x2b90) 1000
 			WSingle ($kptr + 0x2c28) 1000
 		}
-		if ((RUInt16 ($pad + 0x10)) -eq 0x44) {
+		if ((RUInt16 ($pad + 0x10)) -eq 0x44) {			#lb + A
 			if ($global:speeduppress -eq $false) {
 				$global:speeduppress = $true
 				$speed = RSingle ($kptr + 0x2b10)
@@ -344,7 +344,7 @@ $timer.Add_Tick({
 		} else {
 			$global:speeduppress = $false
 		}
-		if ((RUInt16 ($pad + 0x10)) -eq 0x84) {
+		if ((RUInt16 ($pad + 0x10)) -eq 0x84) {			#lb + X
 			if ($global:speeddownpress -eq $false) {
 				$global:speeddownpress = $true
 				$speed = RSingle ($kptr + 0x2b10)
@@ -353,7 +353,7 @@ $timer.Add_Tick({
 		} else {
 			$global:speeddownpress = $false
 		}
-		if ((RUInt16 ($pad + 0x10)) -eq 0x1004) {
+		if ((RUInt16 ($pad + 0x10)) -eq 0x1004) {		#lb + up
 			WSingle ($kptr + 0x2b10) 5
 			WUInt32 ($kptr + 0x2b50) 0
 			WSingle ($kptr + 0x6720) $xpos
@@ -365,7 +365,7 @@ $timer.Add_Tick({
 			WSingle ($cptr + 0x8a4) 0
 		}
 		
-		if ((RUInt16 ($pad + 0x10)) -eq 0x4004) {
+		if ((RUInt16 ($pad + 0x10)) -eq 0x4004) {		#lb + down
 			WSingle ($kptr + 0x2b10) 5
 			WUInt32 ($kptr + 0x2b50) 0
 			WSingle ($kptr + 0x6720) $xpos
@@ -377,7 +377,7 @@ $timer.Add_Tick({
 			WSingle ($cptr + 0x8a4) 0
 		}
 		
-		if ((RUInt16 ($pad + 0x10)) -eq 0x0) {
+		if ((RUInt16 ($pad + 0x10)) -eq 0x0) {			#release jump
 			if ((RSingle ($cptr + 0x8a4)) -lt 0) {
 				WUInt32 ($kptr + 0x2b50) 4
 				WUInt8 ($cptr + 0x8a1) 0
