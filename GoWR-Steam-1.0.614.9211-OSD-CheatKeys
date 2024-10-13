@@ -196,6 +196,11 @@ $global:cheatpress = $false
 $global:speeduppress = $false
 $global:speeddownpress = $false
 
+$global:savex = 0.0
+$global:savey = 0.0
+$global:savez = 0.0
+
+
 $timer.Add_Tick({
 	$CursorPosition = [System.Windows.Forms.Cursor]::Position
 	$NormalizedX = [Math]::Round($CursorPosition.X / $ScreenWidth, 3)
@@ -217,7 +222,9 @@ $timer.Add_Tick({
 		$newEnemyLabel += "LB + A: Speed Up`n"
 		$newEnemyLabel += "LB + X: Speed Down`n"
 		$newEnemyLabel += "LB + Y: Max HP / Rage`n`n"
-		$newEnemyLabel += "LT: Jump`n"
+		$newEnemyLabel += "LT: Jump`n`n"
+		$newEnemyLabel += "L3 + ↑: Save Pos`n"
+		$newEnemyLabel += "L3 + ↓: Restore Pos`n"
 	}
 
 	$cont = $true
@@ -375,6 +382,17 @@ $timer.Add_Tick({
 			
 			WUInt8 ($cptr + 0x8a1) 1
 			WSingle ($cptr + 0x8a4) 0
+		}
+		if ((RUInt16 ($pad + 0x10)) -eq 0x1200) {		#l3 + up
+			$global:savex = $xpos
+			$global:savey = $ypos
+			$global:savez = $zpos
+		}
+		if ((RUInt16 ($pad + 0x10)) -eq 0x4200) {		#l3 + down
+			WSingle ($kptr + 0x6720) $global:savex
+			WSingle ($kptr + 0x6724) $global:savey
+			WSingle ($kptr + 0x6728) $global:savez
+			WUInt8 ($kptr + 0x6774) 1
 		}
 		
 		if ((RUInt16 ($pad + 0x10)) -eq 0x0) {			#release jump
