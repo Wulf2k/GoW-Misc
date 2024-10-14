@@ -1,0 +1,50 @@
+#remove PSN req
+#last tested against EXE ver 1.0.614.9211
+$exeFilePath = "D:\SteamLibrary\steamapps\common\God of War Ragnarok\GoWR.exe"
+
+
+
+
+
+
+
+$byteArray = [System.IO.File]::ReadAllBytes($exeFilePath)
+$searchBytes = [byte[]](0x83, 0xb8, 0xf8, 0x00, 0x00, 0x00, 0x02, 0x75, 0x03, 0xb0)
+$replaceBytes = [byte[]](0x83, 0xb8, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x75, 0x03, 0xb0)
+
+$searchLength = $searchBytes.Length
+$replaceLength = $replaceBytes.Length
+
+$found = $false
+
+for ($i = 0; $i -le $byteArray.Length - $searchLength; $i++) {
+    $match = $true
+    for ($j = 0; $j -lt $searchLength; $j++) {
+        if ($byteArray[$i + $j] -ne $searchBytes[$j]) {
+            $match = $false
+			if ($i % 0x100000 -eq 0) {
+				Write-Host ($i.ToString("X")) " / " $byteArray.length.ToString("X") "            " (($i / $byteArray.length) * 100) "%"
+			}
+            break
+        }
+    }
+    if ($match) {
+        if ($searchLength -eq $replaceLength) {
+            for ($k = 0; $k -lt $replaceLength; $k++) {
+				[System.IO.File]::WriteAllBytes("D:\SteamLibrary\steamapps\common\God of War Ragnarok\GoWR.exe.bak", $byteArray)
+                $byteArray[$i + $k] = $replaceBytes[$k]
+				$found = $true
+            }
+        } else {
+            Write-Host "Error: Replacement byte array must have the same length as the search byte array."
+            break
+        }
+    }
+}
+
+if ($found) {
+	[System.IO.File]::WriteAllBytes("D:\SteamLibrary\steamapps\common\God of War Ragnarok\GoWR.exe", $byteArray)
+	Write-Host "Byte replacement completed."
+} else {
+	Write-Host "Bytes not found"
+}
