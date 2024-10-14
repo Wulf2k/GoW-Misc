@@ -43,7 +43,7 @@ for ($i = 0; $i -le $byteArray.Length - $searchLength; $i++) {
 }
 
 if ($found) {
-	[System.IO.File]::WriteAllBytes("D:\SteamLibrary\steamapps\common\God of War Ragnarok\GoWR.exe", $byteArray)
+	[System.IO.File]::WriteAllBytes($exeFilePath, $byteArray)
 	Write-Host "Byte replacement completed."
 } else {
 	Write-Host "Bytes not found"
