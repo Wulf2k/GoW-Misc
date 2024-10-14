@@ -31,7 +31,7 @@ for ($i = 0; $i -le $byteArray.Length - $searchLength; $i++) {
     if ($match) {
         if ($searchLength -eq $replaceLength) {
             for ($k = 0; $k -lt $replaceLength; $k++) {
-				[System.IO.File]::WriteAllBytes("D:\SteamLibrary\steamapps\common\God of War Ragnarok\GoWR.exe.bak", $byteArray)
+				[System.IO.File]::WriteAllBytes($exeFilePath + ".bak", $byteArray)
                 $byteArray[$i + $k] = $replaceBytes[$k]
 				$found = $true
             }
