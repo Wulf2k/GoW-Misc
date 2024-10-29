@@ -1,6 +1,4 @@
-$str = "behavior_tree.Runtime.eInfluenceDecay"
-
-
+$str = "CraftingUpgradeEpic"
 
 
 Add-Type -AssemblyName "System.Numerics"
@@ -33,91 +31,211 @@ function HashString {
 			$uVar4 = $uVar4 -bxor $uVar4shr % $mod
 			
 			
-			#$uVar4.ToString("X")
+				#$uVar4.ToString("X")
 		}
     }
 	$uVar4 = $uVar4 % $mod
-	return $uVar4
+
+	$hexString = $uVar4.ToString("X")
+	if ($hexString.Length -gt 16) {
+		$hexString = $hexString.Substring($hexString.Length - 16)
+	} else {
+		$hexString = $hexString.PadLeft(16, '0')
+	}	
+	$inputString
+	$hexString
+	$splithexString = $hexString -replace '(.{2})(?!$)', '$1 '
+	$bytePairs = $splithexString -split ' '
+	$reversedHex = $bytePairs[($bytePairs.Length-1)..0] -join ' '
+	$reversedHex
+	
+	
+	Write-Host "'$inputString', # $hexString $reversedHex"
 }
 
 
-
-$hashedValue = HashString $str
-$hexString = $hashedValue.ToString("X")
-if ($hexString.Length -gt 16) {
-	$hexString = $hexString.Substring($hexString.Length - 16)
-} else {
-	$hexString.PadLeft(16, '0')
-}	
-$hexString
+HashString $str
 
 
-$hexString = $hexString -replace '(.{2})(?!$)', '$1 '
-$bytePairs = $hexString -split ' '
-$reversedHex = $bytePairs[($bytePairs.Length-1)..0] -join ' '
-$reversedHex
 
 
+
+
+#last resource logged 90
 $strList = {
-'ArmorUpgradeAsgard',
-'ArmorUpgradeCrystal',
-'AtreusXP',							#	5C E2 67 B4 F9 28 D0 A1
-'Bifrost',
-'BifrostGreyDmg',
-'BondedLeather',
-'Burn',
-'CD_BerserkerComboBreaker',
-'CD_BerserkerFury',
-'CraftingUpgradeCommon',			#	B3 CA AF 07 86 CD 12 80
-'CraftingUpgradeEpic',
-'CraftingUpgradeRare',				#	8F E2 D3 A5 AD 8D 21 2D
-'DecapChance',
-'DragonLoot',
-'DraugrEmpressLoot',
-'EconomyXP',						#	8A 9A 9B 83 1C F6 7C 9C
-'FreyaXP',							#	
-'Frost',
-'Hacksilver',						#	9E 52 40 D2 74 06 E8 5A
-'Health',
-'HelEssence',
-'HexArrow',
-'HiltUpgradeAsgard',
-'HiltUpgradeCommon',
-'HiltUpgradeCrystal',
-'HiltUpgradeEpic',
-'HiltUpgradeRare',
-'HuntersMark',
-'LargeMonsterPart',
-'LindwormScale',
-'MiningRigLoot',
-'Momentum',
-'MomentumBaseSharedMeter',
-'MuspArmorResource',
-'MuspCurrency',						#	3B EE 50 B4 EC B3 62 1E
-'MuspHiltResource',
-'MuspShieldResource',
-'OffBalance',
-'Poison',
-'PristineDragonLoot',
-'PurifiedCrystal',
-'RageDrain',
-'RealmDust',
-'RecentRunicCounter',
-'RunicArmor',
-'ShatteredRunes',
-'ShieldUpgradeAsgard',
-'ShieldUpgradeCommon',
-'ShieldUpgradeCrystal',
-'ShieldUpgradeEpic',
-'ShieldUpgradeRare',
-'ShockArrow',
-'SmallMonsterPart',
-'SonicArrow',
-'SqueakySphereOrb',
-'StoneTrollLoot',
-'StunState',
-'Weaken',
-'WhiplashMeter',
-'WhisperingSlab',
-'Wound'
+'Add_FreyaCompanion00',					#	
+'AlberichIsleLoot',						#	38D3AAC26EE2F6FA	FA F6 E2 6E C2 AA D3 38
+'AlberichTunnelLoot',					#	AF00CF4F886E683F	3F 68 6E 88 4F CF 00 AF
+'Angrboda',								#	F9B4F824E7D0F527	27 F5 D0 E7 24 F8 B4 F9
+'AngurvadalResourceTracker',			#	B86D84824DDC0CDF	DF 0C DC 4D 82 84 6D B8
+'ArmorCrystalTracker',					#	2BD7D177914187EC	EC 87 41 91 77 D1 D7 2B
+'ArmorUpgradeAsgard',					#	7F8323FC15C33E3B	3B 3E C3 15 FC 23 83 7F
+'ArmorUpgradeCrystal',					#	35ED44FCFC76DE49	49 DE 76 FC FC 44 ED 35
+'AsgardContainerCounter',				#	EE8ADDBFD077784F	4F 78 77 D0 BF DD 8A EE
+'AtreusJournal',						#	299D913B387F1BEB	EB 1B 7F 38 3B 91 9D 29
+'AtreusXP',								#	A1D028F9B467E25C	5C E2 67 B4 F9 28 D0 A1
+'Berserk',								#	10D8297F512E1B6E	6E 1B 2E 51 7F 29 D8 10
+'Bifrost',								#	BDE2A63429E29418	18 94 E2 29 34 A6 E2 BD
+'BifrostGreyDmg',						#	12347EF543757FC0	C0 7F 75 43 F5 7E 34 12
+'Blind',								#	010DBF235C493FBA	BA 3F 49 5C 23 BF 0D 01
+'Blood',								#	010DBF22D67C1449	49 14 7C D6 22 BF 0D 01
+'BoatLoot',								#	FFC7B33AFA5543F5	F5 43 55 FA 3A B3 C7 FF
+'BondedLeather',						#	4F5B100295A64536	36 45 A6 95 02 10 5B 4F
+'BROK00',								#	38E39B14A45525EA	EA 25 55 A4 14 9B E3 38
+'Burn',									#	00004251EE47126A	6A 12 47 EE 51 42 00 00
+'CD_BerserkAOE',						#	FA64A41D6E3136CB	CB 36 31 6E 1D A4 64 FA
+'CD_BerserkerComboBreaker',				#	605E517B017B9074	74 90 7B 01 7B 51 5E 60
+'CD_BerserkerFury',						#	BA0D6A05906E86EB	EB 86 6E 90 05 6A 0D BA
+'CD_ComboBreaker',						#	02EDD053B817D0C4	C4 D0 17 B8 53 D0 ED 02
+'CD_Command',							#	2CC8AF3DEC4B55C4	C4 55 4B EC 3D AF C8 2C
+'CD_Overhead',							#	718AF923F7CE5D3D	3D 5D CE F7 23 F9 8A 71
+'CD_StutterStab',						#	F387A1D97244E508	08 E5 44 72 D9 A1 87 F3
+'CD_Whirlwind',							#	3766E65CFA68CC89	89 CC 68 FA 5C E6 66 37
+'ChaosRev',								#	8EC94529AE742306	06 23 74 AE 29 45 C9 8E
+'Char_Brok00',							#
+'Char_FreyaValkyrie00',					#
+'Char_HeroA00',							#	
+'ComboBreaker',							#	8986D62A5F8522F2	F2 22 85 5F 2A D6 86 89
+'CompanionXP',							#	AC98E8B5155F2C73	73 2C 5F 15 B5 E8 98 AC
+'CookingTributeDefense',				#	5E6917398687A7A0	A0 A7 87 86 39 17 69 5E
+'CookingTributeFocus',					#	EDABDCAF42D95F77	77 5F D9 42 AF DC AB ED
+'CookingTributeLuck',					#	28F086EC87E2A8BA	BA A8 E2 87 EC 86 F0 28
+'CookingTributeResistance',				#	38EC0291D1359FDB	DB 9F 35 D1 91 02 EC 38
+'CookingTributeRunic',					#	AC7E02330F736EBB	BB 6E 73 0F 33 02 7E AC
+'CookingTributeStrength',				#	B2C3626B91EB2382	82 23 EB 91 6B 62 C3 B2
+'CraftingUpgradeCommon',				#	8012CD8607AFCAB3	B3 CA AF 07 86 CD 12 80
+'CraftingUpgradeEpic',					#	2D219821A6CB84B2	B2 84 CB A6 21 98 21 2D
+'CraftingUpgradeRare',					#	2D218DADA5D3E28F	8F E2 D3 A5 AD 8D 21 2D
+'CraterCrystal',						#	DB64C0673313E902	02 E9 13 33 67 C0 64 DB
+'CraterCrystalLarge',					#	F642BCAB8ADACF78	78 CF DA 8A AB BC 42 F6
+'DainsleifResourceTracker',				#	AED283F860B1067A	7A 06 B1 60 F8 83 D2 AE
+'Daze',									#	000044724B83F2F9	F9 F2 83 4B 72 44 00 00
+'DecapChance',							#	7D9BBD782761F4DF	DF F4 61 27 78 BD 9B 7D
+'Defense',								#	F0F0C36D7FD3720B	0B 72 D3 7F 6D C3 F0 F0
+'DefenseBoatLoot',						#	9C6B2C793C908F41	41 8F 90 3C 79 2C 6B 9C
+'DefenseMeter',							#	8E49D08729287144	44 71 28 29 87 D0 49 8E
+'Display_ScatteredTome_Angurvadal',		#	8604B315767C1835	35 18 7C 76 15 B3 04 86
+'Display_ScatteredTome_Dainsleif',		#	AB505196D41E56D7	D7 56 1E D4 96 51 50 AB
+'DisplayUI',							#	483BA8A537C3A2D0	D0 A2 C3 37 A5 A8 3B 48
+'DragonLoot',							#	F9A3AF92681E695E	5E 69 1E 68 92 AF A3 F9
+'DraugrEmpressLoot',					#	F7661514835F29C0	C0 29 5F 83 14 15 66 F7
+'DurlinHammer',							#	5A13392A861AFD71	71 FD 1A 86 2A 39 13 5A
+'EconomyXP',							#	9C7CF61C839B9A8A	8A 9A 9B 83 1C F6 7C 9C
+'EndGameSeedPouch',						#	6505E698224F9BF5	F5 9B 4F 22 98 E6 05 65
+'Enrage',								#	466057A77D28C706	06 C7 28 7D A7 57 60 46
+'Focus',								#	011E7DF16AD1B857	57 B8 D1 6A F1 7D 1E 01
+'FocusBoatLoot',						#	2D953C161CDB136A	6A 13 DB 1C 16 3C 95 2D
+'FreyaXP',								#	E577D004DA4F5243	43 52 4F DA 04 D0 77 E5
+'Frost',								#	011CBBEB9CF8A5B5	B5 A5 F8 9C EB BB 1C 01
+'GBL_Global',							#	877C3D63342F6310	10 63 2F 34 63 3D 7C 87
+'Hacksilver',							#	5AE80674D240529E	9E 52 40 D2 74 06 E8 5A
+'Health',								#	9B19DBE095711F08	08 1F 71 95 E0 DB 19 9B
+'HealthGate_Damage',					#	AE438E8A1CAD36F7	F7 36 AD 1C 8A 8E 43 AE
+'HelEssence',							#	CA32D6528EBCE496	96 E4 BC 8E 52 D6 32 CA
+'HERO',									#	00004895C643225F	5F 22 43 C6 95 48 00 00
+'HERO_SAVEONLY',						#	7E7314A9F601D299	99 D2 01 F6 A9 14 73 7E
+'HexArrow',								#	A94FE182D6567660	60 76 56 D6 82 E1 4F A9
+'HiltUpgradeAsgard',					#	0164C8A82DA1716E	6E 71 A1 2D A8 C8 64 01
+'HiltUpgradeCommon',					#	4FB167B13EBE3F7E	7E 3F BE 3E B1 67 B1 4F
+'HiltUpgradeCrystal',					#	FAC359D9CBAC56E1	E1 56 AC CB D9 59 C3 FA
+'HiltUpgradeEpic',						#	D37CC9F00CC092C3	C3 92 C0 0C F0 C9 7C D3
+'HiltUpgradeRare',						#	D37DF96D85271A34	34 1A 27 85 6D F9 7D D3
+'HuntersMark',							#	C65D46E124A7AA9B	9B AA A7 24 E1 46 5D C6
+'IceArmor',								#	E7A9D25DDCDDEDA7	A7 ED DD DC 5D D2 A9 E7
+'JarnsmidaRadiation',					#	ED50D8FAE5156327	27 63 15 E5 FA D8 50 ED
+'LargeMonsterKillCounter',				#	103F7FD924EA6333	33 63 EA 24 D9 7F 3F 10
+'LargeMonsterPartCounter',				#	326FB497579EDBF0	F0 DB 9E 57 97 B4 6F 32
+'LargeMonsterPart',						#	A2486AA082C30D97	97 0D C3 82 A0 6A 48 A2
+'Lightning',							#	5EE4B649E5C10C6F	6F 0C C1 E5 49 B6 E4 5E
+'LindwormScale',						#	C87E473C9761A378	78 A3 61 97 3C 47 7E C8
+'LOST_ITEMS',							#	72B62D37E2D5BDB0	B0 BD D5 E2 37 2D B6 72
+'Luck',									#	00004C857A2CE693	93 E6 2C 7A 85 4C 00 00
+'LuckBoatLoot',							#	5DB3BF85D2C3CBF3	F3 CB C3 D2 85 BF B3 5D
+'MajorRuneMeter',						#	832BE14F9BDF7BCC	CC 7B DF 9B 4F E1 2B 83
+'METER_ComboBreaker',					#	A9B3953A90A6C30F	0F C3 A6 90 3A 95 B3 A9
+'Mid5BarrelTracker',					#	1CA73244D8079D37	37 9D 07 D8 44 32 A7 1C
+'MiningRigLoot',						#	64E4C212F24E07C7	C7 07 4E F2 12 C2 E4 64
+'Momentum',								#	4D3F6E2762A90470	70 04 A9 62 27 6E 3F 4D
+'MomentumBaseShared',					#	6604853EF6351CB9	B9 1C 35 F6 3E 85 04 66
+'MomentumBlades',						#	DCEBFC0FCCB12372	72 23 B1 CC 0F FC EB DC
+'MomentumSpear',						#	ACB0556BA4F0DB24	24 DB F0 A4 6B 55 B0 AC
+'MuspArmorResource',					#	E2B4EF80B990AABD	BD AA 90 B9 80 EF B4 E2
+'MuspCurrency',							#	1E62B3ECB450EE3B	3B EE 50 B4 EC B3 62 1E
+'MuspFlameTracker',						#	4CC543B0A2E10781	81 07 E1 A2 B0 43 C5 4C
+'MuspHiltResource',						#	81399D31CCC27D00	00 7D C2 CC 31 9D 39 81
+'Muspelheim',							#	64F56AEB8C58F771	71 F7 58 8C EB 6A F5 64
+'MuspShieldResource',					#	EADF2012B8BBC3DE	DE C3 BB B8 12 20 DF EA
+'NewGamePlusAttrib',					#	
+'NIF_HOLD',								#	4BD1DEE8035C3A77	77 3A 5C 03 E8 DE D1 4B
+'Nif_Prsn100_Entrance',					#	
+'Nif_Prsn200_Main',						#	
+'Nif_RavenTree050_Sound',				#	
+'Nif_RavenTree050_Vista',				#	
+'Nif_RavenTree100_Main',			
+'Nif010_RealmScripts',					#	
+'Nif050_Sound',							#	
+'Nif075_Lights',						#	
+'NiflheimChallengeRealmUnlock',			#	28FB73555D08478B	8B 47 08 5D 55 73 FB 28
+'NornThread',							#	DC6E6F7A4ECBA8F1	F1 A8 CB 4E 7A 6F 6E DC
+'OffBalance',							#	79953084FE3B7AC8	C8 7A 3B FE 84 30 95 79
+'Poison',								#	148F9E7AA331A22E	2E A2 31 A3 7A 9E 8F 14
+'PostGameAtreusJournal',				#	FA2AAA0F9CB081EF	EF 81 B0 9C 0F AA 2A FA
+'PowerLevel',							#	16710FD0918102E3	E3 02 81 91 D0 0F 71 16
+'PristineDragonLoot',					#	6769D2E7BDDC6BCB	CB 6B DC BD E7 D2 69 67
+'PurifiedCrystal',						#	2DD5808AFB55FF06	06 FF 55 FB 8A 80 D5 2D
+'RageDrain',							#	BAFAD8C294C55DB3	B3 5D C5 94 C2 D8 FA BA
+'RealmDust',							#	CA34EC49A6E8F225	25 F2 E8 A6 49 EC 34 CA
+'RecentRunicCounter',					#	DD6B2184DF7B56F1	F1 56 7B DF 84 21 6B DD
+'Resistance',							#	F3F8167CB71FC5CB	CB C5 1F B7 7C 16 F8 F3
+'ResistanceBoatLoot',					#	27A4C43D2BA1926D	6D 92 A1 2B 3D C4 A4 27
+'RidillResourceTracker',				#	48B115AFBEA3754C	4C 75 A3 BE AF 15 B1 48
+'Runic',								#	014ECBC01AFDB648	48 B6 FD 1A C0 CB 4E 01
+'RunicArmor',							#	A6A0129952BBDAA4	A4 DA BB 52 99 12 A0 A6
+'RunicBoatLoot',						#	3A7AB925F3863462	62 34 86 F3 25 B9 7A 3A
+'ShatteredRunes',						#	BCADF49D2EEEDC44	44 DC EE 2E 9D F4 AD BC
+'ShatteredRuneTracker',					#	45C578E7B2BE88BB	BB 88 BE B2 E7 78 C5 45
+'ShieldUpgradeAsgard',					#	34024E15D1C79691	91 96 C7 D1 15 4E 02 34
+'ShieldUpgradeCommon',					#	DBC322506D89B008	08 B0 89 6D 50 22 C3 DB
+'ShieldUpgradeCrystal',					#	4E92A8584550E86B	6B E8 50 45 58 A8 92 4E
+'ShieldUpgradeEpic',					#	56CABA257449EEB0	B0 EE 49 74 25 BA CA 56
+'ShieldUpgradeRare',					#	56CB1102C2C9DA7B	7B DA C9 C2 02 11 CB 56
+'ShockArrow',							#	E97E82F17B4C56E5	E5 56 4C 7B F1 82 7E E9
+'SINDRI00',								#	8359A1582F66304B	4B 30 66 2F 58 A1 59 83
+'Skofnung',								#	7B0502D7C5B3D928	28 D9 B3 C5 D7 02 05 7B
+'SmallMonsterKillCounter',				#	28DA3EDE061AA0AD	AD A0 1A 06 DE 3E DA 28
+'SmallMonsterPart',						#	1EA4F1B430F75E47	47 5E F7 30 B4 F1 A4 1E
+'SmallMonsterPartCounter',				#	E02C70DE45BCB2A0	A0 B2 BC 45 DE 70 2C E0
+'SonicArrow',							#	90984C45D7673342	42 33 67 D7 45 4C 98 90
+'SpecialMeter',							#	7BCD24704926FA6E	6E FA 26 49 70 24 CD 7B
+'SpecialMeterReduction',				#	9E32BC593F6CB627	27 B6 6C 3F 59 BC 32 9E
+'SqueakySphereOrb',						#	233B569A68CD2AD7	D7 2A CD 68 9A 56 3B 23
+'StoneTrollLoot',						#	49AF5484E36007EC	EC 07 60 E3 84 54 AF 49
+'StoneTrollMirror',						#	E661398DFB47B6BC	BC B6 47 FB 8D 39 61 E6
+'Strength',								#	3AABCE1CF0D0007A	7A 00 D0 F0 1C CE AB 3A
+'StrengthBoatLoot',						#	B34288875C3E1BCC	CC 1B 3E 5C 87 88 42 B3
+'StunState',							#	656D1AF9232CA78B	8B A7 2C 23 F9 1A 6D 65
+'Tome_AngurvadalUpgrade_Light',			#	A3990A964C1021CB	CB 21 10 4C 96 0A 99 A3
+'Tome_DainsleifUpgrade_Poison',			#	600DFFF47F2AC8BA	BA C8 2A 7F F4 FF 0D 60
+'Tome_RidillUpgrade_ThorsTooth',		#	0F5EA64007C80256	56 02 C8 07 40 A6 5E 0F
+'Tome_TyrfingUpgrade_BloodSacrifice',	#	086B670820E0482A	2A 48 E0 20 08 67 6B 08
+'TributeFood',							#	115AD6EF4C773080	80 30 77 4C EF D6 5A 11
+'Tyr',									#	000000155AB321BB	BB 21 B3 5A 15 00 00 00
+'TyrfingResourceTracker',				#	182D1594360E5E3A	3A 5E 0E 36 94 15 2D 18
+'VanXpl_BrokenArmorChest',				#	A840E2A18262AF54	54 AF 62 82 A1 E2 40 A8
+'VanXpl_BrokenArmorLegs',				#	FAAC474DF3F70C20	20 0C F7 F3 4D 47 AC FA
+'VanXpl_BrokenArmorWrist',				#	B0C5E31BF288DEE4	E4 DE 88 F2 1B E3 C5 B0
+'WALLETS_PERM_DATA',					#	A5330ED3A41E6B2F	2F 6B 1E A4 D3 0E 33 A5
+'Weaken',								#	66622FA3F6CD1815	15 18 CD F6 A3 2F 62 66
+'WhiplashMeter',						#	AE259027EC32F88E	8E F8 32 EC 27 90 25 AE
+'WhisperingSlab',						#	7433123E219F06C3	C3 06 9F 21 3E 12 33 74
+'WLT_Global',							#	222C2ADDD5DD12DD	DD 12 DD D5 DD 2A 2C 22
+'Wound',								#	015B7E4EFC8EC02B	2B C0 8E FC 4E 7E 5B 01
+'YggdrasilDewCounter',					#	469ACEC011481A2A	2A 1A 48 11 C0 CE 9A 46
+'YggdrasilDewLabor'						#	C533F391D316E9D7	D7 E9 16 D3 91 F3 33 C5
 }
+
+#unk, relate to StunState
+#	3E67AD87E4465F7C
+#	373D6A0C27D55C79
+#	2E26B335DD777889
+#	864E9BCEE4FEE9D
