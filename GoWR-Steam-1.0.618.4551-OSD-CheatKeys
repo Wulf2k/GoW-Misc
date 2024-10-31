@@ -190,6 +190,7 @@ $timer.Interval = 33
 $global:cheatpress = $false
 $global:speeduppress = $false
 $global:speeddownpress = $false
+$global:invulnpress = $false
 
 $global:savex = 0.0
 $global:savey = 0.0
@@ -218,8 +219,12 @@ $timer.Add_Tick({
 		$newEnemyLabel += "LB + X: Speed Down`n"
 		$newEnemyLabel += "LB + Y: Max HP / Rage`n`n"
 		$newEnemyLabel += "LT: Jump`n`n"
+		$newEnemyLabel += "L3 + Y: Toggle Invuln`n"
 		$newEnemyLabel += "L3 + ↑: Save Pos`n"
-		$newEnemyLabel += "L3 + ↓: Restore Pos`n"
+		$newEnemyLabel += "L3 + ↓: Restore Pos`n`n"
+		$newEnemyLabel += "Invulnerable: "
+		$invuln = RUInt8 ($ba + 0x3935879)
+		$newEnemyLabel += ($invuln -eq 1) + "`n"
 	}
 
 	$cont = $true
@@ -327,6 +332,7 @@ $timer.Add_Tick({
 		WUInt32 ($kptr + 0x2b50) 4
 		WUInt8 ($cptr + 0x8a1) 0
 		WSingle ($cptr + 0x8a4) 0
+		WUInt8 ($ba + 0x3935879) 0		#disable invuln
 		$global:cheatpress = $false
 	}
 	
@@ -391,6 +397,15 @@ $timer.Add_Tick({
 			WSingle ($kptr + 0x6724) $global:savey
 			WSingle ($kptr + 0x6728) $global:savez
 			WUInt8 ($kptr + 0x6774) 1
+		}
+		if ((RUInt16 ($pad + 0x10)) -eq 0x0210) {		#l3 + Y
+			if ($global:invulnpress -eq $false) {
+				$global:invulnpress = $true
+				$invuln = RUInt8 ($ba + 0x3935879)
+				WUInt8 ($ba + 0x3935879) (1 - $invuln)
+			}
+		} else {
+			$global:invulnpress = $false
 		}
 		
 		if ((RUInt16 ($pad + 0x10)) -eq 0x0) {			#release jump

@@ -114,6 +114,7 @@ $strList = {
 'Defense',								#	F0F0C36D7FD3720B	0B 72 D3 7F 6D C3 F0 F0
 'DefenseBoatLoot',						#	9C6B2C793C908F41	41 8F 90 3C 79 2C 6B 9C
 'DefenseMeter',							#	8E49D08729287144	44 71 28 29 87 D0 49 8E
+'Difficulty',							#	945DF2C512925FC3	C3 5F 92 12 C5 F2 5D 94
 'Display_ScatteredTome_Angurvadal',		#	8604B315767C1835	35 18 7C 76 15 B3 04 86
 'Display_ScatteredTome_Dainsleif',		#	AB505196D41E56D7	D7 56 1E D4 96 51 50 AB
 'DisplayUI',							#	483BA8A537C3A2D0	D0 A2 C3 37 A5 A8 3B 48
@@ -181,6 +182,7 @@ $strList = {
 'Poison',								#	148F9E7AA331A22E	2E A2 31 A3 7A 9E 8F 14
 'PostGameAtreusJournal',				#	FA2AAA0F9CB081EF	EF 81 B0 9C 0F AA 2A FA
 'PowerLevel',							#	16710FD0918102E3	E3 02 81 91 D0 0F 71 16
+'PowerLevelFloored',					#	51E8A4E7F9CBB059	59 B0 CB F9 E7 A4 E8 51
 'PristineDragonLoot',					#	6769D2E7BDDC6BCB	CB 6B DC BD E7 D2 69 67
 'PurifiedCrystal',						#	2DD5808AFB55FF06	06 FF 55 FB 8A 80 D5 2D
 'RageDrain',							#	BAFAD8C294C55DB3	B3 5D C5 94 C2 D8 FA BA
