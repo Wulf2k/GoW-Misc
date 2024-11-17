@@ -1,5 +1,5 @@
 #remove PSN req
-#last tested against EXE ver 1.0.614.9211
+#last tested against EXE ver 1.0.622.6666
 $exeFilePath = "D:\SteamLibrary\steamapps\common\God of War Ragnarok\GoWR.exe"
 
 
